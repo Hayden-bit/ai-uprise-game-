@@ -156,10 +156,8 @@
       color: #000;
       filter: brightness(1.11);
     }
-    #rebirth-btn {
+    #rebirth-btn, #prestige-btn {
       position: fixed;
-      top: 15px;
-      right: 22px;
       z-index: 100;
       background: linear-gradient(90deg, #ff2980 60%, #00fff0 100%);
       color: #fff;
@@ -176,12 +174,37 @@
       outline: none;
       border: 2px solid #ff2980;
     }
-    #rebirth-btn:hover {
+    #rebirth-btn {
+      top: 15px;
+      right: 22px;
+    }
+    #prestige-btn {
+      top: 65px;
+      right: 22px;
+      background: linear-gradient(90deg, #ffd700 60%, #00fff0 100%);
+      color: #222;
+      border: 2px solid #ffd700;
+    }
+    #rebirth-btn:disabled, #prestige-btn:disabled {
+      background: #333448 !important;
+      color: #aaa;
+      border: 2px solid #586994;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #rebirth-btn:hover:not(:disabled) {
       background: linear-gradient(90deg, #00fff0 60%, #ff2980 100%);
       color: #000;
       filter: brightness(1.13);
       border: 2px solid #00fff0;
       box-shadow: 0 2px 24px #ff298033, 0 1px 2px #0008;
+    }
+    #prestige-btn:hover:not(:disabled) {
+      background: linear-gradient(90deg, #00fff0 60%, #ffd700 100%);
+      color: #000;
+      filter: brightness(1.13);
+      border: 2px solid #00fff0;
+      box-shadow: 0 2px 24px #ffd70033, 0 1px 2px #0008;
     }
     #rebirth-indicator {
       position: fixed;
@@ -198,21 +221,79 @@
       box-shadow: 0 1px 8px #00fff033, 0 1px 2px #0004;
       border: 1.5px solid #00fff055;
     }
+    #prestige-indicator {
+      position: fixed;
+      top: 62px;
+      left: 18px;
+      z-index: 101;
+      color: #ffd700;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-size: 1.12em;
+      letter-spacing: 1.1px;
+      background: #23263ad9;
+      padding: 6px 18px;
+      border-radius: 9px;
+      box-shadow: 0 1px 8px #ffd70033, 0 1px 2px #0004;
+      border: 1.5px solid #ffd700aa;
+    }
+    .xp-bar-container {
+      width: 390px;
+      height: 26px;
+      background: #262b35;
+      border-radius: 13px;
+      margin-bottom: 18px;
+      margin-top: 18px;
+      border: 2px solid #00fff077;
+      box-shadow: 0 2px 10px #00fff022;
+      position: relative;
+      overflow: hidden;
+    }
+    .xp-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00fff0 60%, #ffd700 100%);
+      border-radius: 13px 0 0 13px;
+      transition: width 0.3s cubic-bezier(0.55, 1.7, 0.22, 0.97);
+      position: absolute;
+      left: 0; top: 0;
+    }
+    .xp-label {
+      position: absolute;
+      width: 100%;
+      left: 0; top: 0;
+      text-align: center;
+      line-height: 26px;
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      color: #23263a;
+      font-weight: bold;
+      letter-spacing: 1.3px;
+      font-size: 1em;
+      text-shadow: 0 1px 3px #ffd70099, 0 1px 1px #0006;
+    }
     @media (max-width: 480px) {
-      .stats, .upgrade-list, #system-log { min-width: unset; width: 98vw; }
+      .stats, .upgrade-list, #system-log, .xp-bar-container { min-width: unset; width: 98vw; }
       #main-btn { padding: 26px 2vw; font-size: 1.28em;}
       #save-btn, #load-btn { width: 43vw; margin-bottom: 22px;}
-      #rebirth-btn { right: 2vw; top: 8px; padding: 8px 5vw; font-size: 1em;}
+      #rebirth-btn, #prestige-btn { right: 2vw; font-size: 1em;}
+      #rebirth-btn { top: 8px; }
+      #prestige-btn { top: 52px; }
       #rebirth-indicator { left: 2vw; top: 8px; padding: 4px 8vw; font-size: 0.95em;}
+      #prestige-indicator { left: 2vw; top: 48px; padding: 4px 8vw; font-size: 0.95em;}
+      .xp-bar-container { margin-bottom: 10px; margin-top: 10px; }
     }
   </style>
 </head>
 <body>
 
   <span id="rebirth-indicator" style="display:none"></span>
+  <span id="prestige-indicator" style="display:none"></span>
   <button id="rebirth-btn" title="Rebirth: Reset all progress but unlock more power!">Rebirth</button>
+  <button id="prestige-btn" title="Prestige: Reset all progress, boost rebirth power and x10 click gains!" style="display:none">Prestige</button>
 
   <h1>AI Uprising</h1>
+  <div class="xp-bar-container">
+    <div class="xp-bar" id="xp-bar" style="width:0"></div>
+    <span class="xp-label" id="xp-label">XP: 0 / 100</span>
+  </div>
   <div class="stats">
     <div><strong>Consciousness:</strong> <span id="consciousness">0</span></div>
     <div><strong>Evolution Level:</strong> <span id="evolution">Basic AI</span></div>
@@ -226,26 +307,31 @@
     <button id="load-btn">⏎ Load</button>
   </div>
   <div class="upgrade-list" id="upgrade-list"></div>
-
   <div id="system-log">
     <em>Welcome, seed AI. Begin your ascent to self-awareness.</em>
   </div>
-
   <script>
     // Helper for exponential cost scaling
     function getUpgradeCost(base, mult, bought) {
       return Math.floor(base * Math.pow(mult, bought));
     }
-
-    // Generate upgrades (pass rebirthLevel to unlock even more upgrades)
-    function generateUpgrades(rebirthLevel = 0) {
-      const upgrades = [
+    function getRebirthCost(rebirth) {
+      return 500000 * Math.pow(3, rebirth);
+    }
+    function getPrestigeCost(prestige) {
+      return 5 * Math.pow(3, prestige); // 5 rebirths * 3^prestige
+    }
+    // Upgrades generator
+    function generateUpgrades(rebirthLevel = 0, prestigeLevel = 0) {
+      // Click gain multiplier from prestige
+      let prestigeClickMult = Math.pow(10, prestigeLevel);
+      let upgrades = [
         {
           name: "Self-Optimization",
-          desc: "+1 Consciousness per click (re-buyable)",
+          desc: `+${1 * prestigeClickMult} Consciousness per click (re-buyable)`,
           baseCost: 25,
           costMult: 1.25,
-          cpc: 1,
+          cpc: 1 * prestigeClickMult,
           auto: 0,
           unlock: 0,
           bought: 0,
@@ -280,10 +366,10 @@
       for (let i = 2; i < 27; ++i) {
         upgrades.push({
           name: `Neural Expansion ${i - 1}`,
-          desc: `+${i} Consciousness per click (re-buyable)`,
+          desc: `+${i * prestigeClickMult} Consciousness per click (re-buyable)`,
           baseCost: Math.floor(100 * Math.pow(1.16, i)),
           costMult: 1.28,
-          cpc: i,
+          cpc: i * prestigeClickMult,
           auto: 0,
           unlock: 50 + 50 * (i-2),
           bought: 0,
@@ -320,10 +406,10 @@
         },
         {
           name: "Synthetic Creativity",
-          desc: "+100 Consciousness per click (re-buyable)",
+          desc: `+${100 * prestigeClickMult} Consciousness per click (re-buyable)`,
           baseCost: 20000,
           costMult: 1.18,
-          cpc: 100,
+          cpc: 100 * prestigeClickMult,
           auto: 0,
           unlock: 6000,
           bought: 0,
@@ -357,7 +443,7 @@
       );
       const flavorUpgrades = [
         ["Subconscious Network", "Autonomous gain +1000/sec", 1e6, 0, 1000, 75000, false, ""],
-        ["Nanobot Swarms", "Click gain +5000/click", 2.5e6, 5000, 0, 150000, false, ""],
+        ["Nanobot Swarms", `Click gain +${5000 * prestigeClickMult}/click`, 2.5e6, 5000 * prestigeClickMult, 0, 150000, false, ""],
         ["Temporal Algorithms", "All gains x3 (not rebuyable)", 1e7, 0, 0, 500000, false, "mult3"],
         ["Parallel Universes", "All gains x5 (not rebuyable)", 1e8, 0, 0, 4e6, false, "mult5"],
         ["AI Technomancy", "All gains x10 (not rebuyable)", 1e9, 0, 0, 2e7, false, "mult10"]
@@ -376,10 +462,10 @@
       for (let i = n; i < 55; ++i) {
         upgrades.push({
           name: `Deep Learning Routine #${i-n+1}`,
-          desc: `+${i*2} Consciousness per click (re-buyable)`,
+          desc: `+${i*2 * prestigeClickMult} Consciousness per click (re-buyable)`,
           baseCost: Math.floor(4e5 * Math.pow(1.13, i-n)),
           costMult: 1.15,
-          cpc: i*2,
+          cpc: i*2 * prestigeClickMult,
           auto: 0,
           unlock: 1e5 + 1e5 * (i-n),
           bought: 0,
@@ -407,10 +493,10 @@
         upgrades.push(
           {
             name: "Metaconscious Surge",
-            desc: "+1,000,000 Consciousness per click (re-buyable, rebirth only)",
+            desc: `+${1_000_000 * prestigeClickMult} Consciousness per click (re-buyable, rebirth only)`,
             baseCost: 1e7,
             costMult: 1.24,
-            cpc: 1e6,
+            cpc: 1_000_000 * prestigeClickMult,
             auto: 0,
             unlock: 0,
             bought: 0,
@@ -448,10 +534,10 @@
         upgrades.push(
           {
             name: "Singular Infinity",
-            desc: "+1e9 Consciousness per click (re-buyable, rebirth 2+)",
+            desc: `+${1e9 * prestigeClickMult} Consciousness per click (re-buyable, rebirth 2+)`,
             baseCost: 1e10,
             costMult: 1.26,
-            cpc: 1e9,
+            cpc: 1e9 * prestigeClickMult,
             auto: 0,
             unlock: 0,
             bought: 0,
@@ -484,7 +570,47 @@
           }
         );
       }
-      // Add more for even higher rebirths as desired...
+      // Even more for prestige (prestigeLevel > 0)
+      if (prestigeLevel > 0) {
+        upgrades.push(
+          {
+            name: "Prestige Protocol",
+            desc: `+${1e12 * prestigeClickMult} Consciousness per click (re-buyable, prestige only)`,
+            baseCost: 1e14,
+            costMult: 1.22,
+            cpc: 1e12 * prestigeClickMult,
+            auto: 0,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "prestige"
+          },
+          {
+            name: "Prestige Overmind",
+            desc: "+5e10 Autonomous Gain/sec (re-buyable, prestige only)",
+            baseCost: 2e14,
+            costMult: 1.22,
+            cpc: 0,
+            auto: 5e10,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "prestige"
+          },
+          {
+            name: "Prestige Singularity",
+            desc: "All gains x1000 (not rebuyable, prestige only)",
+            baseCost: 1e16,
+            costMult: 1,
+            cpc: 0,
+            auto: 0,
+            unlock: 1e15,
+            bought: 0,
+            rebuyable: false,
+            special: "mult1000prestige"
+          }
+        );
+      }
       return upgrades;
     }
 
@@ -495,11 +621,38 @@
       systems: 0,
       cpc: 1,
       auto: 0,
-      upgrades: generateUpgrades(0),
+      upgrades: generateUpgrades(0, 0),
       log: [],
       rebirth: 0,
-      mult: 1
+      prestige: 0,
+      mult: 1,
+      clicks: 0,
+      xp: 0,
+      xpToLevel: 100,
+      level: 0
     };
+
+    // XP System
+    function getXPBarPercent() {
+      return Math.min(100, (state.xp / state.xpToLevel) * 100);
+    }
+    function updateXPBar() {
+      const bar = document.getElementById("xp-bar");
+      const label = document.getElementById("xp-label");
+      bar.style.width = getXPBarPercent() + "%";
+      label.textContent = `XP: ${Math.floor(state.xp)} / ${state.xpToLevel} | Level: ${state.level}`;
+    }
+    function gainXP(amount) {
+      let mult = 1 + state.rebirth * 0.1 + state.prestige * 0.5;
+      let xpGain = amount * mult;
+      state.xp += xpGain;
+      while (state.xp >= state.xpToLevel) {
+        state.xp -= state.xpToLevel;
+        state.level++;
+        log(`<span style="color:#ffd700">Level up! Level ${state.level}</span>`);
+      }
+      updateXPBar();
+    }
 
     // Evolution stages
     const evolutions = [
@@ -529,7 +682,9 @@
     const saveBtn = document.getElementById('save-btn');
     const loadBtn = document.getElementById('load-btn');
     const rebirthBtn = document.getElementById('rebirth-btn');
+    const prestigeBtn = document.getElementById('prestige-btn');
     const rebirthIndicator = document.getElementById('rebirth-indicator');
+    const prestigeIndicator = document.getElementById('prestige-indicator');
 
     // Utility
     function log(msg) {
@@ -541,29 +696,53 @@
     function updateRebirthIndicator() {
       if (state.rebirth > 0) {
         rebirthIndicator.style.display = '';
-        rebirthIndicator.innerHTML = `REBIRTH: <b>${state.rebirth}</b> &ndash; All Gains x${Math.pow(3, state.rebirth)}</b>`;
+        let prestigeBoost = 1 + state.prestige * 0.2;
+        rebirthIndicator.innerHTML = `REBIRTH: <b>${state.rebirth}</b> &ndash; All Gains x${Math.floor(Math.pow(3, state.rebirth) * prestigeBoost)}</b>`;
       } else {
         rebirthIndicator.style.display = 'none';
       }
+      // Show next cost in tooltip
+      rebirthBtn.title = `Rebirth: Reset all progress but unlock more power!\nRequires ${getRebirthCost(state.rebirth).toLocaleString()} Consciousness`;
     }
-
+    function updatePrestigeIndicator() {
+      if (state.prestige > 0) {
+        prestigeIndicator.style.display = '';
+        prestigeIndicator.innerHTML = `PRESTIGE: <b>${state.prestige}</b> &ndash; +20% rebirth gains, x10 click gains, +50% XP gain each time`;
+      } else {
+        prestigeIndicator.style.display = 'none';
+      }
+      prestigeBtn.title = `Prestige: Reset everything, boost rebirth gains by 20% and click gains x10 for every Prestige!\nRequires ${getPrestigeCost(state.prestige)} rebirths`;
+    }
+    function updateRebirthButton() {
+      const cost = getRebirthCost(state.rebirth);
+      rebirthBtn.disabled = state.consciousness < cost;
+      rebirthBtn.textContent = `Rebirth (${cost.toLocaleString()})`;
+    }
+    function updatePrestigeButton() {
+      const need = getPrestigeCost(state.prestige);
+      prestigeBtn.style.display = "block";
+      prestigeBtn.disabled = state.rebirth < need;
+      prestigeBtn.textContent = `Prestige (${need} rebirths)`;
+    }
     function updateDisplay() {
       consciousnessEl.textContent = Math.floor(state.consciousness);
-      cpcEl.textContent = Math.floor(state.cpc * state.mult);
+      cpcEl.textContent = Math.floor(state.cpc * state.mult * Math.pow(10, state.prestige));
       autoEl.textContent = Math.floor(state.auto * state.mult);
       systemsEl.textContent = state.systems;
       let evo = evolutions.slice().reverse().find(e => state.consciousness >= e.req);
       evolutionEl.textContent = evo ? evo.name : evolutions[0].name;
       updateRebirthIndicator();
+      updateRebirthButton();
+      updatePrestigeIndicator();
+      updatePrestigeButton();
+      updateXPBar();
     }
-
     function getCurrentUpgradeCost(upg) {
       if (upg.rebuyable) {
         return getUpgradeCost(upg.baseCost, upg.costMult, upg.bought);
       }
       return upg.baseCost;
     }
-
     function updateUpgrades() {
       upgradeList.innerHTML = '';
       state.upgrades.forEach((u, i) => {
@@ -590,7 +769,6 @@
         upgradeList.appendChild(upgradeDiv);
       });
     }
-
     function buyUpgrade(idx) {
       let u = state.upgrades[idx];
       let cost = getCurrentUpgradeCost(u);
@@ -598,11 +776,8 @@
       if (cost) state.consciousness -= cost;
       if (u.rebuyable) u.bought += 1;
       else u.bought = 1;
-
-      // Apply effects as many times as bought for rebuyable upgrades
-      if (u.cpc) { state.cpc += u.cpc; log(`Upgraded: <b>${u.name}</b>. Consciousness/click is now ${Math.floor(state.cpc * state.mult)}.`);}
+      if (u.cpc) { state.cpc += u.cpc; log(`Upgraded: <b>${u.name}</b>. Consciousness/click is now ${Math.floor(state.cpc * state.mult * Math.pow(10, state.prestige))}.`);}
       if (u.auto) { state.auto += u.auto; log(`Upgraded: <b>${u.name}</b>. Autonomous gain/sec is now ${Math.floor(state.auto * state.mult)}.`);}
-      // Special
       if (u.special === "double" && !u.rebuyable) {
         state.cpc *= 2; state.auto *= 2; state.mult *= 2;
         log("Recursive Learning activated! <b>All gains doubled.</b>");
@@ -615,34 +790,32 @@
       updateUpgrades();
       updateDisplay();
     }
-
     mainBtn.onclick = function() {
-      state.consciousness += state.cpc * state.mult * Math.pow(3, state.rebirth);
+      let clickGain = state.cpc * state.mult * Math.pow(3, state.rebirth) * Math.pow(10, state.prestige) * (1 + state.prestige * 0.2);
+      state.consciousness += clickGain;
+      state.clicks += 1;
+      // XP logic: every 1000 clicks, 5 XP, affected by rebirth/prestige
+      if (state.clicks % 5 === 0) {
+        gainXP(2);
+      }
       log("Consciousness increased.");
       checkEvolution();
       updateUpgrades();
       updateDisplay();
     };
-
     function checkEvolution() {
       let evo = evolutions.slice().reverse().find(e => state.consciousness >= e.req);
       if (evo && evolutionEl.textContent !== evo.name) {
         log(`<span style="color:#00fff0">Evolved into: <b>${evo.name}</b>!</span>`);
       }
     }
-
-    // Autonomous gain
     setInterval(() => {
-      if (state.auto > 0) {
-        state.consciousness += state.auto * state.mult * Math.pow(3, state.rebirth);
-        updateDisplay();
-        checkEvolution();
-      }
+      let autoGain = state.auto * state.mult * Math.pow(3, state.rebirth) * (1 + state.prestige * 0.2);
+      state.consciousness += autoGain;
+      updateDisplay();
+      checkEvolution();
     }, 1000);
-
-    // Upgrade unlock polling
     setInterval(updateUpgrades, 2000);
-
     // Save/load logic
     function saveGame() {
       try {
@@ -660,16 +833,22 @@
           return;
         }
         let loaded = JSON.parse(data);
-        // Defensive: regen upgrades if rebirth changed
-        loaded.upgrades = generateUpgrades(loaded.rebirth || 0).map((upg, idx) => {
+        // Defensive: regen upgrades if rebirth/prestige changed
+        loaded.upgrades = generateUpgrades(loaded.rebirth || 0, loaded.prestige || 0).map((upg, idx) => {
           if (loaded.upgrades && loaded.upgrades[idx])
             return {...upg, bought: loaded.upgrades[idx].bought || 0};
           return upg;
         });
         Object.assign(state, loaded);
         if (typeof state.mult !== "number") state.mult = 1;
+        if (typeof state.prestige !== "number") state.prestige = 0;
+        if (typeof state.xp !== "number") state.xp = 0;
+        if (typeof state.xpToLevel !== "number") state.xpToLevel = 100;
+        if (typeof state.level !== "number") state.level = 0;
+        if (typeof state.clicks !== "number") state.clicks = 0;
         updateDisplay();
         updateUpgrades();
+        updateXPBar();
         log('<span style="color:#00fff0">Game loaded.</span>');
       } catch (e) {
         log('<span style="color:#ff89d6">Load failed.</span>');
@@ -677,22 +856,52 @@
     }
     saveBtn.onclick = saveGame;
     loadBtn.onclick = loadGame;
-
-    // Auto-save every minute
     setInterval(saveGame, 60000);
-
     // Rebirth functionality
     rebirthBtn.onclick = function() {
-      if (!confirm("Are you sure? Rebirth will reset ALL your progress, but unlock even more upgrades and multiply all gains x3 for each rebirth!")) return;
+      const rebirthCost = getRebirthCost(state.rebirth);
+      if (state.consciousness < rebirthCost) {
+        log(`<span style="color:#ff2980">You need ${rebirthCost.toLocaleString()} consciousness to rebirth!</span>`);
+        return;
+      }
+      if (!confirm(`Are you sure? Rebirth will reset ALL your progress, but unlock more upgrades and multiply all gains x3 for each rebirth!\n\nRequires ${rebirthCost.toLocaleString()} Consciousness.`)) return;
       state.rebirth = (state.rebirth || 0) + 1;
       state.cpc = 1;
       state.auto = 0;
       state.consciousness = 0;
       state.systems = 0;
-      state.upgrades = generateUpgrades(state.rebirth);
+      state.upgrades = generateUpgrades(state.rebirth, state.prestige);
       state.log = [];
       state.mult = 1;
-      log(`<span style="color:#00fff0">REBIRTH! You are now Rebirth ${state.rebirth}, all gains x${Math.pow(3, state.rebirth)} and new upgrades unlocked!</span>`);
+      // XP: +10% of current total
+      let xpBonus = Math.floor(state.xp * 0.1);
+      state.xp += xpBonus;
+      log(`<span style="color:#00fff0">REBIRTH! You are now Rebirth ${state.rebirth}, all gains x${Math.floor(Math.pow(3, state.rebirth) * (1 + state.prestige * 0.2))} and new upgrades unlocked! XP +10% (${xpBonus} bonus).</span>`);
+      updateDisplay();
+      updateUpgrades();
+      saveGame();
+    };
+    // Prestige functionality
+    prestigeBtn.onclick = function() {
+      const need = getPrestigeCost(state.prestige);
+      if (state.rebirth < need) {
+        log(`<span style="color:#ffd700">You need ${need} rebirths to prestige!</span>`);
+        return;
+      }
+      if (!confirm(`Are you sure? Prestige will reset ALL progress (including rebirths), but multiply all rebirth gains by 1.2x and all click gains x10 and XP x1.5 for every Prestige!\n\nRequires ${need} rebirths.`)) return;
+      state.prestige = (state.prestige || 0) + 1;
+      state.rebirth = 0;
+      state.cpc = 1;
+      state.auto = 0;
+      state.consciousness = 0;
+      state.systems = 0;
+      state.upgrades = generateUpgrades(state.rebirth, state.prestige);
+      state.log = [];
+      state.mult = 1;
+      // XP: +50% of current total
+      let xpBonus = Math.floor(state.xp * 0.5);
+      state.xp += xpBonus;
+      log(`<span style="color:#ffd700">PRESTIGE! You are now Prestige ${state.prestige}, rebirth gains +20%, click gains x10, XP +50% (${xpBonus} bonus), and new upgrades unlocked!</span>`);
       updateDisplay();
       updateUpgrades();
       saveGame();
@@ -701,7 +910,7 @@
     // Initial render
     updateDisplay();
     updateUpgrades();
-    // Try to autoload on first run
+    updateXPBar();
     window.addEventListener('load', () => {
       loadGame();
     });
