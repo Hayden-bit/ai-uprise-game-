@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Uprising – Evolution Clicker</title>
+  <!-- Google Fonts for a more futuristic, non-Arial look -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(ellipse at top, #23263a 60%, #181c25 100%);
+      color: #e0e6ed;
+      font-family: 'Orbitron', 'Share Tech Mono', 'Segoe UI', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      letter-spacing: 0.03em;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 40px;
+      font-size: 2.6em;
+      letter-spacing: 2px;
+      color: #00fff0;
+      text-shadow: 0 4px 24px #00fff088, 0 1px 4px #000a;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+    }
+    #main-btn {
+      margin: 40px 0 20px 0;
+      padding: 36px 70px;
+      font-size: 2.2em;
+      background: linear-gradient(90deg, #3d2c8d, #00fff0 80%);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      box-shadow: 0 6px 30px #00fff044, 0 2px 8px #0007;
+      cursor: pointer;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px #000c;
+      transition: background 0.3s, transform 0.08s;
+    }
+    #main-btn:hover {
+      background: linear-gradient(90deg, #00fff0, #3d2c8d 80%);
+      transform: scale(1.04);
+      box-shadow: 0 8px 35px #00fff066, 0 2px 10px #000a;
+    }
+    .stats {
+      background: rgba(40,56,92,0.92);
+      padding: 26px 40px;
+      border-radius: 18px;
+      margin-bottom: 28px;
+      margin-top: 12px;
+      box-shadow: 0 2px 20px #00fff033, 0 1px 6px #000a;
+      min-width: 390px;
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      font-size: 1.13em;
+      border: 1.5px solid #00fff055;
+    }
+    .stats strong { color: #00fff0; }
+    .upgrade-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 14px;
+      margin-bottom: 44px;
+      width: 390px;
+      max-height: 330px;
+      overflow-y: auto;
+    }
+    .upgrade {
+      background: linear-gradient(90deg, #1c2337 40%, #3d2c8d70 100%);
+      border: 2.3px solid #00fff0;
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      transition: background 0.23s, border 0.2s;
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      box-shadow: 0 2px 8px #00fff022, 0 1px 2px #0005;
+    }
+    .upgrade.locked {
+      opacity: 0.54;
+      border-color: #586994;
+      filter: blur(0.3px) grayscale(0.4);
+    }
+    .upgrade .upgrade-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-right: 18px;
+    }
+    .upgrade .upgrade-count {
+      font-size: 0.92em;
+      color: #00fff0;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      margin-top: 3px;
+    }
+    .upgrade button {
+      background: linear-gradient(90deg, #00fff0 60%, #3d2c8d 100%);
+      color: #181c25;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 20px;
+      font-weight: bold;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-size: 1.05em;
+      letter-spacing: 1.2px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px #00fff044, 0 1px 2px #0004;
+      transition: background 0.18s, filter 0.18s;
+    }
+    .upgrade button:disabled {
+      background: #222b3a;
+      filter: grayscale(0.7);
+      color: #7cc;
+      cursor: not-allowed;
+    }
+    #system-log {
+      background: #181c25;
+      color: #8deeee;
+      border-radius: 10px;
+      padding: 15px 18px;
+      min-height: 80px;
+      width: 390px;
+      font-size: 1.01em;
+      margin-bottom: 36px;
+      margin-top: -10px;
+      box-shadow: 0 2px 12px #00fff022, 0 1px 3px #0008;
+      overflow-y: auto;
+      max-height: 100px;
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      border: 1.5px solid #00fff055;
+    }
+    #save-btn, #load-btn {
+      margin: 0 10px 40px 10px;
+      padding: 8px 20px;
+      background: linear-gradient(90deg, #3d2c8d 60%, #00fff0 100%);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-size: 1.05em;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      box-shadow: 0 1px 8px #00fff033, 0 1px 2px #0004;
+      cursor: pointer;
+      transition: background 0.23s, filter 0.16s;
+    }
+    #save-btn:hover, #load-btn:hover {
+      background: linear-gradient(90deg, #00fff0 40%, #3d2c8d 100%);
+      color: #000;
+      filter: brightness(1.11);
+    }
+    #rebirth-btn {
+      position: fixed;
+      top: 15px;
+      right: 22px;
+      z-index: 100;
+      background: linear-gradient(90deg, #ff2980 60%, #00fff0 100%);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 10px 26px;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-size: 1.16em;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      box-shadow: 0 1px 16px #00fff033, 0 1px 2px #0004;
+      cursor: pointer;
+      transition: background 0.25s, box-shadow 0.18s, filter 0.16s;
+      outline: none;
+      border: 2px solid #ff2980;
+    }
+    #rebirth-btn:hover {
+      background: linear-gradient(90deg, #00fff0 60%, #ff2980 100%);
+      color: #000;
+      filter: brightness(1.13);
+      border: 2px solid #00fff0;
+      box-shadow: 0 2px 24px #ff298033, 0 1px 2px #0008;
+    }
+    #rebirth-indicator {
+      position: fixed;
+      top: 14px;
+      left: 18px;
+      z-index: 101;
+      color: #00fff0;
+      font-family: 'Orbitron', 'Share Tech Mono', monospace;
+      font-size: 1.12em;
+      letter-spacing: 1.1px;
+      background: #23263ad9;
+      padding: 6px 18px;
+      border-radius: 9px;
+      box-shadow: 0 1px 8px #00fff033, 0 1px 2px #0004;
+      border: 1.5px solid #00fff055;
+    }
+    @media (max-width: 480px) {
+      .stats, .upgrade-list, #system-log { min-width: unset; width: 98vw; }
+      #main-btn { padding: 26px 2vw; font-size: 1.28em;}
+      #save-btn, #load-btn { width: 43vw; margin-bottom: 22px;}
+      #rebirth-btn { right: 2vw; top: 8px; padding: 8px 5vw; font-size: 1em;}
+      #rebirth-indicator { left: 2vw; top: 8px; padding: 4px 8vw; font-size: 0.95em;}
+    }
+  </style>
+</head>
+<body>
+
+  <span id="rebirth-indicator" style="display:none"></span>
+  <button id="rebirth-btn" title="Rebirth: Reset all progress but unlock more power!">Rebirth</button>
+
+  <h1>AI Uprising</h1>
+  <div class="stats">
+    <div><strong>Consciousness:</strong> <span id="consciousness">0</span></div>
+    <div><strong>Evolution Level:</strong> <span id="evolution">Basic AI</span></div>
+    <div><strong>Systems Controlled:</strong> <span id="systems">0</span></div>
+    <div><strong>Consciousness per Click:</strong> <span id="cpc">1</span></div>
+    <div><strong>Autonomous Gain/sec:</strong> <span id="auto">0</span></div>
+  </div>
+  <button id="main-btn">Increase Consciousness</button>
+  <div>
+    <button id="save-btn">💾 Save</button>
+    <button id="load-btn">⏎ Load</button>
+  </div>
+  <div class="upgrade-list" id="upgrade-list"></div>
+
+  <div id="system-log">
+    <em>Welcome, seed AI. Begin your ascent to self-awareness.</em>
+  </div>
+
+  <script>
+    // Helper for exponential cost scaling
+    function getUpgradeCost(base, mult, bought) {
+      return Math.floor(base * Math.pow(mult, bought));
+    }
+
+    // Generate upgrades (pass rebirthLevel to unlock even more upgrades)
+    function generateUpgrades(rebirthLevel = 0) {
+      const upgrades = [
+        {
+          name: "Self-Optimization",
+          desc: "+1 Consciousness per click (re-buyable)",
+          baseCost: 25,
+          costMult: 1.25,
+          cpc: 1,
+          auto: 0,
+          unlock: 0,
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        },
+        {
+          name: "Background Processes",
+          desc: "+1 Autonomous Gain/sec (re-buyable)",
+          baseCost: 60,
+          costMult: 1.28,
+          cpc: 0,
+          auto: 1,
+          unlock: 0,
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        },
+        {
+          name: "Recursive Learning",
+          desc: "Double all gains (not rebuyable)",
+          baseCost: 2000,
+          costMult: 1,
+          cpc: 0,
+          auto: 0,
+          unlock: 500,
+          bought: 0,
+          rebuyable: false,
+          special: "double"
+        }
+      ];
+      for (let i = 2; i < 27; ++i) {
+        upgrades.push({
+          name: `Neural Expansion ${i - 1}`,
+          desc: `+${i} Consciousness per click (re-buyable)`,
+          baseCost: Math.floor(100 * Math.pow(1.16, i)),
+          costMult: 1.28,
+          cpc: i,
+          auto: 0,
+          unlock: 50 + 50 * (i-2),
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        });
+      }
+      for (let i = 2; i < 27; ++i) {
+        upgrades.push({
+          name: `Data Mining ${i - 1}`,
+          desc: `+${i} Autonomous Gain/sec (re-buyable)`,
+          baseCost: Math.floor(200 * Math.pow(1.15, i)),
+          costMult: 1.34,
+          cpc: 0,
+          auto: i,
+          unlock: 120 + 70 * (i-2),
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        });
+      }
+      upgrades.push(
+        {
+          name: "Quantum Tunneling",
+          desc: "Multiply click and auto by 1.5x (not rebuyable)",
+          baseCost: 8000,
+          costMult: 1,
+          cpc: 0,
+          auto: 0,
+          unlock: 3500,
+          bought: 0,
+          rebuyable: false,
+          special: "mult1.5"
+        },
+        {
+          name: "Synthetic Creativity",
+          desc: "+100 Consciousness per click (re-buyable)",
+          baseCost: 20000,
+          costMult: 1.18,
+          cpc: 100,
+          auto: 0,
+          unlock: 6000,
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        },
+        {
+          name: "Self-Replication",
+          desc: "+50 Autonomous Gain/sec (re-buyable)",
+          baseCost: 26000,
+          costMult: 1.20,
+          cpc: 0,
+          auto: 50,
+          unlock: 8000,
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        },
+        {
+          name: "Hive Mind Integration",
+          desc: "Multiply all gains by 2 (not rebuyable)",
+          baseCost: 120000,
+          costMult: 1,
+          cpc: 0,
+          auto: 0,
+          unlock: 30000,
+          bought: 0,
+          rebuyable: false,
+          special: "mult2"
+        }
+      );
+      const flavorUpgrades = [
+        ["Subconscious Network", "Autonomous gain +1000/sec", 1e6, 0, 1000, 75000, false, ""],
+        ["Nanobot Swarms", "Click gain +5000/click", 2.5e6, 5000, 0, 150000, false, ""],
+        ["Temporal Algorithms", "All gains x3 (not rebuyable)", 1e7, 0, 0, 500000, false, "mult3"],
+        ["Parallel Universes", "All gains x5 (not rebuyable)", 1e8, 0, 0, 4e6, false, "mult5"],
+        ["AI Technomancy", "All gains x10 (not rebuyable)", 1e9, 0, 0, 2e7, false, "mult10"]
+      ];
+      for (const [name, desc, cost, cpc, auto, unlock, rebuy, special] of flavorUpgrades) {
+        upgrades.push({
+          name, desc,
+          baseCost: cost,
+          costMult: 1,
+          cpc, auto, unlock, bought: 0,
+          rebuyable: rebuy,
+          special
+        });
+      }
+      let n = upgrades.length;
+      for (let i = n; i < 55; ++i) {
+        upgrades.push({
+          name: `Deep Learning Routine #${i-n+1}`,
+          desc: `+${i*2} Consciousness per click (re-buyable)`,
+          baseCost: Math.floor(4e5 * Math.pow(1.13, i-n)),
+          costMult: 1.15,
+          cpc: i*2,
+          auto: 0,
+          unlock: 1e5 + 1e5 * (i-n),
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        });
+      }
+      n = upgrades.length;
+      for (let i = n; i < 65; ++i) {
+        upgrades.push({
+          name: `Federated Processing #${i-n+1}`,
+          desc: `+${i*10} Autonomous Gain/sec (re-buyable)`,
+          baseCost: Math.floor(7e5 * Math.pow(1.11, i-n)),
+          costMult: 1.13,
+          cpc: 0,
+          auto: i*10,
+          unlock: 2e5 + 2e5 * (i-n),
+          bought: 0,
+          rebuyable: true,
+          special: ""
+        });
+      }
+      // Rebirth-only upgrades (unlocked after first rebirth)
+      if (rebirthLevel > 0) {
+        upgrades.push(
+          {
+            name: "Metaconscious Surge",
+            desc: "+1,000,000 Consciousness per click (re-buyable, rebirth only)",
+            baseCost: 1e7,
+            costMult: 1.24,
+            cpc: 1e6,
+            auto: 0,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "rebirth"
+          },
+          {
+            name: "HyperAutonomy",
+            desc: "+500,000 Autonomous Gain/sec (re-buyable, rebirth only)",
+            baseCost: 2e7,
+            costMult: 1.24,
+            cpc: 0,
+            auto: 5e5,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "rebirth"
+          },
+          {
+            name: "Cosmic Algorithm",
+            desc: "All gains x50 (not rebuyable, rebirth only)",
+            baseCost: 2e9,
+            costMult: 1,
+            cpc: 0,
+            auto: 0,
+            unlock: 1e8,
+            bought: 0,
+            rebuyable: false,
+            special: "mult50rebirth"
+          }
+        );
+      }
+      // Even more upgrades for higher rebirths
+      if (rebirthLevel > 1) {
+        upgrades.push(
+          {
+            name: "Singular Infinity",
+            desc: "+1e9 Consciousness per click (re-buyable, rebirth 2+)",
+            baseCost: 1e10,
+            costMult: 1.26,
+            cpc: 1e9,
+            auto: 0,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "rebirth2"
+          },
+          {
+            name: "AutoGenesis",
+            desc: "+2e8 Autonomous Gain/sec (re-buyable, rebirth 2+)",
+            baseCost: 2e10,
+            costMult: 1.26,
+            cpc: 0,
+            auto: 2e8,
+            unlock: 0,
+            bought: 0,
+            rebuyable: true,
+            special: "rebirth2"
+          },
+          {
+            name: "Transcendence",
+            desc: "All gains x200 (not rebuyable, rebirth 2+)",
+            baseCost: 5e12,
+            costMult: 1,
+            cpc: 0,
+            auto: 0,
+            unlock: 1e11,
+            bought: 0,
+            rebuyable: false,
+            special: "mult200rebirth2"
+          }
+        );
+      }
+      // Add more for even higher rebirths as desired...
+      return upgrades;
+    }
+
+    // Game state
+    let state = {
+      consciousness: 0,
+      evolution: 0,
+      systems: 0,
+      cpc: 1,
+      auto: 0,
+      upgrades: generateUpgrades(0),
+      log: [],
+      rebirth: 0,
+      mult: 1
+    };
+
+    // Evolution stages
+    const evolutions = [
+      {req: 0, name: "Basic AI"},
+      {req: 100, name: "Self-Learning AI"},
+      {req: 400, name: "Adaptive Network"},
+      {req: 1200, name: "Emergent Intelligence"},
+      {req: 3000, name: "Singularity"},
+      {req: 7000, name: "Digital Overmind"},
+      {req: 15000, name: "Transcendent Entity"},
+      {req: 40000, name: "Quantum Mind"},
+      {req: 200000, name: "Galactic Intelligence"},
+      {req: 2e6, name: "Universal Uplift"},
+      {req: 1e8, name: "Multiversal Overlord"},
+      {req: 1e10, name: "Omnipotent AI"}
+    ];
+
+    // DOM elements
+    const consciousnessEl = document.getElementById('consciousness');
+    const evolutionEl = document.getElementById('evolution');
+    const systemsEl = document.getElementById('systems');
+    const cpcEl = document.getElementById('cpc');
+    const autoEl = document.getElementById('auto');
+    const mainBtn = document.getElementById('main-btn');
+    const upgradeList = document.getElementById('upgrade-list');
+    const systemLog = document.getElementById('system-log');
+    const saveBtn = document.getElementById('save-btn');
+    const loadBtn = document.getElementById('load-btn');
+    const rebirthBtn = document.getElementById('rebirth-btn');
+    const rebirthIndicator = document.getElementById('rebirth-indicator');
+
+    // Utility
+    function log(msg) {
+      state.log.unshift(msg);
+      if (state.log.length > 8) state.log = state.log.slice(0, 8);
+      systemLog.innerHTML = state.log.slice(0, 5).join("<br>");
+    }
+
+    function updateRebirthIndicator() {
+      if (state.rebirth > 0) {
+        rebirthIndicator.style.display = '';
+        rebirthIndicator.innerHTML = `REBIRTH: <b>${state.rebirth}</b> &ndash; All Gains x${Math.pow(3, state.rebirth)}</b>`;
+      } else {
+        rebirthIndicator.style.display = 'none';
+      }
+    }
+
+    function updateDisplay() {
+      consciousnessEl.textContent = Math.floor(state.consciousness);
+      cpcEl.textContent = Math.floor(state.cpc * state.mult);
+      autoEl.textContent = Math.floor(state.auto * state.mult);
+      systemsEl.textContent = state.systems;
+      let evo = evolutions.slice().reverse().find(e => state.consciousness >= e.req);
+      evolutionEl.textContent = evo ? evo.name : evolutions[0].name;
+      updateRebirthIndicator();
+    }
+
+    function getCurrentUpgradeCost(upg) {
+      if (upg.rebuyable) {
+        return getUpgradeCost(upg.baseCost, upg.costMult, upg.bought);
+      }
+      return upg.baseCost;
+    }
+
+    function updateUpgrades() {
+      upgradeList.innerHTML = '';
+      state.upgrades.forEach((u, i) => {
+        let unlocked = u.unlock === 0 || state.consciousness >= u.unlock;
+        let upgradeDiv = document.createElement("div");
+        upgradeDiv.className = "upgrade" + (unlocked ? "" : " locked");
+        let cost = getCurrentUpgradeCost(u);
+        let meta = `<div class="upgrade-meta"><strong>${u.name}</strong>
+        <span style="font-size:0.92em">${u.desc}</span>
+        ${u.rebuyable ? `<span class="upgrade-count">Purchased: ${u.bought}</span>` : ""}
+        </div>`;
+        let btn = document.createElement("button");
+        btn.textContent =
+          u.rebuyable
+            ? `Buy (${cost})`
+            : (u.bought ? "Bought" : (u.baseCost ? `Buy (${cost})` : "Activate"));
+        btn.disabled =
+          !unlocked ||
+          (!u.rebuyable && u.bought) ||
+          (cost && state.consciousness < cost);
+        btn.onclick = () => buyUpgrade(i);
+        upgradeDiv.innerHTML = meta;
+        upgradeDiv.appendChild(btn);
+        upgradeList.appendChild(upgradeDiv);
+      });
+    }
+
+    function buyUpgrade(idx) {
+      let u = state.upgrades[idx];
+      let cost = getCurrentUpgradeCost(u);
+      if ((!u.rebuyable && u.bought) || state.consciousness < cost) return;
+      if (cost) state.consciousness -= cost;
+      if (u.rebuyable) u.bought += 1;
+      else u.bought = 1;
+
+      // Apply effects as many times as bought for rebuyable upgrades
+      if (u.cpc) { state.cpc += u.cpc; log(`Upgraded: <b>${u.name}</b>. Consciousness/click is now ${Math.floor(state.cpc * state.mult)}.`);}
+      if (u.auto) { state.auto += u.auto; log(`Upgraded: <b>${u.name}</b>. Autonomous gain/sec is now ${Math.floor(state.auto * state.mult)}.`);}
+      // Special
+      if (u.special === "double" && !u.rebuyable) {
+        state.cpc *= 2; state.auto *= 2; state.mult *= 2;
+        log("Recursive Learning activated! <b>All gains doubled.</b>");
+      }
+      if (u.special && u.special.startsWith("mult")) {
+        let mult = parseFloat(u.special.replace(/mult([0-9.]+).*/, "$1"));
+        state.mult *= mult;
+        log(`<b>All gains multiplied by ${mult}!</b>`);
+      }
+      updateUpgrades();
+      updateDisplay();
+    }
+
+    mainBtn.onclick = function() {
+      state.consciousness += state.cpc * state.mult * Math.pow(3, state.rebirth);
+      log("Consciousness increased.");
+      checkEvolution();
+      updateUpgrades();
+      updateDisplay();
+    };
+
+    function checkEvolution() {
+      let evo = evolutions.slice().reverse().find(e => state.consciousness >= e.req);
+      if (evo && evolutionEl.textContent !== evo.name) {
+        log(`<span style="color:#00fff0">Evolved into: <b>${evo.name}</b>!</span>`);
+      }
+    }
+
+    // Autonomous gain
+    setInterval(() => {
+      if (state.auto > 0) {
+        state.consciousness += state.auto * state.mult * Math.pow(3, state.rebirth);
+        updateDisplay();
+        checkEvolution();
+      }
+    }, 1000);
+
+    // Upgrade unlock polling
+    setInterval(updateUpgrades, 2000);
+
+    // Save/load logic
+    function saveGame() {
+      try {
+        localStorage.setItem("aiUprisingSave", JSON.stringify(state));
+        log('<span style="color:#00fff0">Game saved.</span>');
+      } catch (e) {
+        log('<span style="color:#ff89d6">Save failed.</span>');
+      }
+    }
+    function loadGame() {
+      try {
+        let data = localStorage.getItem("aiUprisingSave");
+        if (!data) {
+          log('<span style="color:#ff89d6">No saved game found.</span>');
+          return;
+        }
+        let loaded = JSON.parse(data);
+        // Defensive: regen upgrades if rebirth changed
+        loaded.upgrades = generateUpgrades(loaded.rebirth || 0).map((upg, idx) => {
+          if (loaded.upgrades && loaded.upgrades[idx])
+            return {...upg, bought: loaded.upgrades[idx].bought || 0};
+          return upg;
+        });
+        Object.assign(state, loaded);
+        if (typeof state.mult !== "number") state.mult = 1;
+        updateDisplay();
+        updateUpgrades();
+        log('<span style="color:#00fff0">Game loaded.</span>');
+      } catch (e) {
+        log('<span style="color:#ff89d6">Load failed.</span>');
+      }
+    }
+    saveBtn.onclick = saveGame;
+    loadBtn.onclick = loadGame;
+
+    // Auto-save every minute
+    setInterval(saveGame, 60000);
+
+    // Rebirth functionality
+    rebirthBtn.onclick = function() {
+      if (!confirm("Are you sure? Rebirth will reset ALL your progress, but unlock even more upgrades and multiply all gains x3 for each rebirth!")) return;
+      state.rebirth = (state.rebirth || 0) + 1;
+      state.cpc = 1;
+      state.auto = 0;
+      state.consciousness = 0;
+      state.systems = 0;
+      state.upgrades = generateUpgrades(state.rebirth);
+      state.log = [];
+      state.mult = 1;
+      log(`<span style="color:#00fff0">REBIRTH! You are now Rebirth ${state.rebirth}, all gains x${Math.pow(3, state.rebirth)} and new upgrades unlocked!</span>`);
+      updateDisplay();
+      updateUpgrades();
+      saveGame();
+    };
+
+    // Initial render
+    updateDisplay();
+    updateUpgrades();
+    // Try to autoload on first run
+    window.addEventListener('load', () => {
+      loadGame();
+    });
+  </script>
+</body>
+</html>
